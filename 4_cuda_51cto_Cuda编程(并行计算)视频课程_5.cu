@@ -12,7 +12,6 @@
 //CUDA RunTime API
 #include <cuda_runtime.h>
 #define DATA_SIZE 1048576
-int data[DATA_SIZE];
 
 //产生大量0-9之间的随机数
 void GenerateNumbers(int *number, int size)
@@ -51,11 +50,11 @@ bool InitCUDA()
 
 // __global__ 函数 (GPU上执行) 计算立方和 
 //核函数是不可以有返回值类型的
-__global__ static void sumOfSquares( int *num, int* result)
+__global__ static void sumOfSquares( int *num, int size, int* result)
 {
 	int sum = 0;
 	int i;
-	for (i = 0; i < DATA_SIZE; i++) {
+	for (i = 0; i < size; i++) {
 		sum += num[i] * num[i] * num[i];
 	}
 	*result = sum;
@@ -63,6 +62,7 @@ __global__ static void sumOfSquares( int *num, int* result)
 
 int main()
 {
+	int data[DATA_SIZE];
 	//CUDA 初始化
 	if (!InitCUDA()) {
 		return 0;
@@ -79,7 +79,7 @@ int main()
 	//cudaMemcpyDeviceToHost - 从显卡内存复制到内存
 	cudaMemcpy(gpudata, data, sizeof(int)* DATA_SIZE, cudaMemcpyHostToDevice);
 	// 在CUDA 中执行函数 语法：函数名称<<<block 数目, thread 数目, shared memory 大小>>>(参数...);
-	sumOfSquares << <1, 1, 0 >> >(gpudata, result);
+	sumOfSquares << <1, 1, 0 >> >(gpudata, DATA_SIZE, result);
 	/*把结果从显示芯片复制回主内存*/
 	int sum;
 	//cudaMemcpy 将结果从显存中复制回内存
